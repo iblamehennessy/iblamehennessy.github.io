@@ -27,7 +27,7 @@ jobs:
           
           (async () => {
             try {
-              const duo = new Duolingo('YOUR_USERNAME_HERE');
+              const duo = new Duolingo('ricouwv');
               await duo.init();
               
               const data = {
