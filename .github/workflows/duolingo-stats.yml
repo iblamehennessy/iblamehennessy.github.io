@@ -1,0 +1,58 @@
+name: Update Duolingo Stats
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch: 
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install duolingo
+      
+      - name: Fetch Duolingo stats
+        run: |
+          node -e "
+          const Duolingo = require('duolingo');
+          
+          (async () => {
+            try {
+              const duo = new Duolingo('YOUR_USERNAME_HERE');
+              await duo.init();
+              
+              const data = {
+                totalXp: duo.getField('totalXp'),
+                streak: duo.getField('streak'),
+                totalCrowns: duo.getTotalCrowns(),
+                learningLanguage: duo.getField('learningLanguage'),
+                username: duo.getField('username'),
+                lastUpdated: new Date().toISOString()
+              };
+              
+              const fs = require('fs');
+              fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+              console.log('Stats updated:', data);
+            } catch (error) {
+              console.error('Error fetching stats:', error);
+              process.exit(1);
+            }
+          })();
+          "
+      
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data.json
+          git commit -m "Update Duolingo stats" || echo "No changes to commit"
+          git push
